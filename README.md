@@ -4,6 +4,7 @@ A simple PHP5+ implementation of the Akismet anti-spam system for blogs, forums,
 ## Installation
 Place the akismet.php file into whatever folder you use for libraries.
 In whatever places you think appropriate, add function calls to utlize the API to check for spam in submissions.
+Obtain a Wordpress API Key from https://akismet.com/
 
 ## Examples
 
