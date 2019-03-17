@@ -84,4 +84,9 @@ Obtain a Wordpress API Key from https://akismet.com/
 ### Projects Using This Code
 
 AFKTrack (https://github.com/Arthmoor/AFKTrack)
+
 Sandbox (https://github.com/Arthmoor/Sandbox)
+
+QSF Portal (https://github.com/Arthmoor/QSF-Portal)
+
+Please consider making a donation: https://www.patreon.com/arthmoor
