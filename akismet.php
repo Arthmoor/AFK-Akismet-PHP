@@ -1,6 +1,6 @@
 <?php
-/* AFK-Akismet-PHP v1.0 https://github.com/Arthmoor/AFK-Akismet-PHP
- * Copyright (c) 2019 Roger Libiez aka Arthmoor
+/* AFK-Akismet-PHP v1.1 https://github.com/Arthmoor/AFK-Akismet-PHP
+ * Copyright (c) 2019-2024 Roger Libiez aka Arthmoor
  *
  * Implements the Akismet API found at https://akismet.com/development/api/#detailed-docs
  * This library requires the use of a Wordpress API Key which can be obtained at https://akismet.com/
@@ -13,7 +13,6 @@ class Akismet
 	private $akismet_domain = 'rest.akismet.com';
 	private $akismet_server_port = 443;
 	private $akismet_version = '1.1';
-	private $akismet_api_server;
 	private $akismet_request_path;
 	private $akismet_useragent;
 	private $comment_data;
@@ -26,11 +25,11 @@ class Akismet
 	{
 		$this->site_url = $host_url;
 		$this->api_key = $api_key;
-		$this->akismet_useragent = 'AFK-Akismet-PHP/1.0 | Akismet/' . $this->akismet_version;
+		$this->akismet_useragent = 'AFK-Akismet-PHP/1.1 | Akismet/' . $this->akismet_version;
 
-		$this->akismet_api_server = $this->api_key . '.' . $this->akismet_domain;
 		$this->akismet_request_path = '/' . $this->akismet_version;
 
+      $this->comment_data['api_key'] = $this->api_key;
 		$this->comment_data['blog'] = $this->site_url;
 
 		if( $ip != null )
@@ -52,8 +51,11 @@ class Akismet
 		$this->comment_data['blog_charset'] = 'UTF-8';
 	}
 
-	private function send_request( $request, $path, $server )
+	private function send_request( $request, $path )
 	{
+      $path = $this->akismet_request_path . $path;
+      $server = $this->akismet_domain;
+
 		$http_request  = "POST $path HTTP/1.0\r\n";
 		$http_request .= "Host: $server\r\n";
 		$http_request .= "Content-Type: application/x-www-form-urlencoded; charset=utf-8\r\n";
@@ -101,7 +103,7 @@ class Akismet
 	{
 		$request = 'key=' . $this->api_key . '&blog=' . urlencode( stripslashes( $this->site_url ) );
 
-		$response = $this->send_request( $request, $this->akismet_request_path . '/verify-key', $this->akismet_domain );
+		$response = $this->send_request( $request, '/verify-key' );
 
 		return $response[1] == 'valid';
 	}
@@ -111,13 +113,14 @@ class Akismet
 	{
 		$query = $this->create_query_string();
 
-		$response = $this->send_request( $query, $this->akismet_request_path . '/comment-check', $this->akismet_api_server );
+		$response = $this->send_request( $query, '/comment-check' );
 
 		if( $response[1] == 'invalid' && !$this->is_key_valid() ) {
 			throw new exception( 'The Akismet API Key for this site is not valid. If this issue persists, notify the site administrators.' );
 		}
 
-		return( $response[1] == 'true' );
+      // In this case we want to examine more of the response besides just it being spam, so return the entire response. The calling function should parse it for the needed information.
+		return( $response );
 	}
 
 	// Used to report something that did not get marked as spam, but really is. [False Negative]
@@ -125,7 +128,7 @@ class Akismet
 	{
 		$query = $this->create_query_string();
 
-		$response = $this->send_request( $query, $this->akismet_request_path . '/submit-spam', $this->akismet_api_server );
+		$response = $this->send_request( $query, '/submit-spam' );
 
 		if( $response[1] != 'Thanks for making the web a better place.' && !$this->is_key_valid() ) {
 			throw new exception( 'The Akismet API Key for this site is not valid. If this issue persists, notify the site administrators.' );
@@ -137,7 +140,7 @@ class Akismet
 	{
 		$query = $this->create_query_string();
 
-		$response = $this->send_request( $query, $this->akismet_request_path . '/submit-ham', $this->akismet_api_server );
+		$response = $this->send_request( $query, '/submit-ham' );
 
 		if( $response[1] != 'Thanks for making the web a better place.' && !$this->is_key_valid() ) {
 			throw new exception( 'The Akismet API Key for this site is not valid. If this issue persists, notify the site administrators.' );
